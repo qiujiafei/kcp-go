@@ -53,6 +53,11 @@ const (
 	IKCP_SN_OFFSET   = 12
 )
 
+const (
+	KCP2K_CHANNEL = 1
+	KCP2K_COOKIE  = 4
+)
+
 // monotonic reference time point
 var refTime time.Time = time.Now()
 
@@ -195,7 +200,7 @@ func NewKCP(conv uint32, output output_callback) *KCP {
 	kcp.rcv_wnd = IKCP_WND_RCV
 	kcp.rmt_wnd = IKCP_WND_RCV
 	kcp.mtu = IKCP_MTU_DEF
-	kcp.mss = kcp.mtu - IKCP_OVERHEAD
+	kcp.mss = calcMss(kcp.mtu)
 	kcp.buffer = make([]byte, kcp.mtu)
 	kcp.rx_rto = IKCP_RTO_DEF
 	kcp.rx_minrto = IKCP_RTO_MIN
@@ -205,6 +210,15 @@ func NewKCP(conv uint32, output output_callback) *KCP {
 	kcp.dead_link = IKCP_DEADLINK
 	kcp.output = output
 	return kcp
+}
+
+func (kcp *KCP) SetMTU(mtu uint32) {
+	kcp.mtu = mtu
+	kcp.mss = calcMss(mtu)
+}
+
+func calcMss(mtu uint32) uint32 {
+	return mtu - IKCP_OVERHEAD - KCP2K_CHANNEL - KCP2K_COOKIE
 }
 
 // newSegment creates a KCP segment
