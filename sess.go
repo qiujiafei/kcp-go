@@ -358,17 +358,20 @@ RESET_TIMER:
 			// transmit all data sequentially, make sure every packet size is within 'mss'
 			for _, b := range v {
 				n += len(b)
-				s.kcp.Send(b)
-				// handle each slice for packet splitting
-				// for {
-				// 	if len(b) <= int(s.kcp.mss) {
-				// 		s.kcp.Send(b)
-				// 		break
-				// 	} else {
-				// 		s.kcp.Send(b[:s.kcp.mss])
-				// 		b = b[s.kcp.mss:]
-				// 	}
-				// }
+				if s.kcp.stream == 0 {
+					s.kcp.Send(b)
+				} else {
+					// handle each slice for packet splitting
+					for {
+						if len(b) <= int(s.kcp.mss) {
+							s.kcp.Send(b)
+							break
+						} else {
+							s.kcp.Send(b[:s.kcp.mss])
+							b = b[s.kcp.mss:]
+						}
+					}
+				}
 			}
 
 			waitsnd = s.kcp.WaitSnd()
