@@ -358,6 +358,7 @@ RESET_TIMER:
 			// transmit all data sequentially, make sure every packet size is within 'mss'
 			for _, b := range v {
 				n += len(b)
+				opcode := b[0]
 				if s.kcp.stream == 0 {
 					s.kcp.Send(b)
 				} else {
@@ -369,6 +370,7 @@ RESET_TIMER:
 						} else {
 							s.kcp.Send(b[:s.kcp.mss])
 							b = b[s.kcp.mss:]
+							b = append([]byte{opcode}, b...)
 						}
 					}
 				}
@@ -511,6 +513,12 @@ func (s *UDPSession) SetStreamMode(enable bool) {
 	} else {
 		s.kcp.stream = 0
 	}
+}
+
+func (s *UDPSession) GetKcpMss() uint32 {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.kcp.mss
 }
 
 // SetACKNoDelay changes ack flush option, set true to flush ack immediately,
